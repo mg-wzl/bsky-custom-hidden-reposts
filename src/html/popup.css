@@ -1,0 +1,9 @@
+body {
+  width: 20rem;
+  background-color: #222;
+}
+
+h3,
+p {
+  color: #FFF;
+}

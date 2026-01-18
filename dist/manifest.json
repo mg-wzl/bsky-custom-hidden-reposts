@@ -3,6 +3,9 @@
   "name": "Bluesky Hide Reposts",
   "version": "0.1",
   "description": "Customize hiding reposts in your Bluesky feeds",
+  "host_permissions": [
+    "*://bsky.app/*"
+  ],
   "content_scripts": [
     {
       "js": ["preload.js"],
@@ -11,6 +14,9 @@
       ]
     }
   ],
+  "action": {
+    "default_popup": "html/popup.html"
+  },
   "web_accessible_resources": [{
      "matches": ["*://bsky.app/*"],
      "resources": ["scripts/*.js"]

@@ -26,7 +26,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "compile": "npx tsc",
-    "copy-assets": "cp ./{manifest.json,preload.js} ./dist",
+    "copy-assets": "cp ./{manifest.json,preload.js} ./dist && mkdir ./dist/html && cp ./src/html/* ./dist/html",
     "build": "npm run clean && npm run compile && npm run copy-assets"
   },
   "devDependencies": {

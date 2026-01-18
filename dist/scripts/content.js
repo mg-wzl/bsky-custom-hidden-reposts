@@ -102,5 +102,13 @@ function observeTabLists() {
     });
 }
 console.log(LOG_PREFIX, 'Script started!');
+chrome.runtime.onMessage.addListener((message) => {
+    if (message === 'WZLBskyHideReposts.extTurnedOn') {
+        console.log(LOG_PREFIX, 'Turned on');
+    }
+    if (message === 'WZLBskyHideReposts.extTurnedOff') {
+        console.log(LOG_PREFIX, 'Turned off');
+    }
+});
 observeTabLists();
 export {};
