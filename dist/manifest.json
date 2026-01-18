@@ -6,6 +6,9 @@
   "host_permissions": [
     "*://bsky.app/*"
   ],
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
       "js": ["preload.js"],

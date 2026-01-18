@@ -1,3 +1,5 @@
+import { getSettings } from './getSettings.js';
+
 const LOG_PREFIX = 'WZL_';
 
 const tabXpath =
@@ -118,15 +120,23 @@ function getActiveFeedContainer(index: number) {
   }
 }
 
+let tabsListObserver: MutationObserver | null = null;
+
 function observeTabLists() {
-  const observer = new MutationObserver((mutations) => {
+  if (tabsListObserver) {
+    throw Error('Tabs observer already exists, cannot create a new one');
+  }
+  tabsListObserver = new MutationObserver((mutations) => {
     const element = getElement(tabListXpath);
     if (element) {
       const activeTabs = getVisibleTabs();
       const activeIndex = activeTabs.findIndex((tab) => tab.isActive);
       if (activeIndex !== -1 && activeTabs[activeIndex]) {
         const activeFeedContainerNode = getActiveFeedContainer(activeIndex);
-        if (activeFeedContainerNode && observedTab?.containerNode !== activeFeedContainerNode) {
+        if (
+          activeFeedContainerNode &&
+          observedTab?.containerNode !== activeFeedContainerNode
+        ) {
           removeTabObserver();
           addTabObserver(
             activeIndex,
@@ -139,21 +149,37 @@ function observeTabLists() {
     }
   });
 
-  observer.observe(document.body, {
+  tabsListObserver.observe(document.body, {
     childList: true,
     subtree: true,
   });
 }
 
+function stopObservingChanges() {
+  tabsListObserver?.disconnect();
+  tabsListObserver = null;
+  removeTabObserver();
+}
+
 console.log(LOG_PREFIX, 'Script started!');
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message === 'WZLBskyHideReposts.extTurnedOn') {
-    console.log(LOG_PREFIX, 'Turned on');
-  }
-  if (message === 'WZLBskyHideReposts.extTurnedOff') {
-    console.log(LOG_PREFIX, 'Turned off');
+chrome.storage.sync.onChanged.addListener((changes) => {
+  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+    if (key === 'enabled') {
+      if (newValue === false) {
+        console.log(LOG_PREFIX, 'Turned off');
+        stopObservingChanges();
+      } else {
+        console.log(LOG_PREFIX, 'Turned on');
+        observeTabLists();
+      }
+    }
   }
 });
 
-observeTabLists();
+(async () => {
+  let initialSettings = await getSettings();
+  if (initialSettings.enabled) {
+    observeTabLists();
+  }
+})();
