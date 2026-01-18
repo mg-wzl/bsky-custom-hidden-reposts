@@ -9,20 +9,6 @@ function setIsExtensionEnabled(isEnabled) {
   });
 }
 
-// unused for now
-function sendMessageToAllTabs() {
-  chrome.tabs.query({ url: '*://bsky.app/*' }, (tabs) => {
-    console.log('Send to tabs:', tabs);
-    for (const tab of tabs) {
-      console.log('send to ', tab.id);
-      chrome.tabs.sendMessage(
-        tab.id,
-        `WZLBskyHideReposts.${this.checked ? 'enabled' : 'disabled'}`,
-      );
-    }
-  });
-}
-
 function onEnabledCheckboxClicked() {
   setIsExtensionEnabled(this.checked);
 }
