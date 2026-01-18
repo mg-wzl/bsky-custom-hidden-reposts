@@ -12,7 +12,7 @@ const activeTabColor = 'rgb(255, 255, 255)';
 
 const tabListXpath = '//*[@role="tablist"]';
 
-const getElement = (xpath) => {
+const getElement = (xpath: string) => {
   return document.evaluate(
     xpath,
     document,
@@ -22,7 +22,7 @@ const getElement = (xpath) => {
   ).singleNodeValue;
 };
 
-const getOrderedElements = (xpath, includeHidden) => {
+const getOrderedElements = (xpath: string, includeHidden: boolean = false) => {
   const iterator = document.evaluate(
     xpath,
     document,
@@ -32,44 +32,54 @@ const getOrderedElements = (xpath, includeHidden) => {
   );
   const result = [];
   try {
-    let thisNode = iterator.iterateNext();
+    let thisNode = iterator.iterateNext() as HTMLElement;
 
     while (thisNode) {
       if (includeHidden || thisNode.checkVisibility()) {
         result.push(thisNode);
       }
-      thisNode = iterator.iterateNext();
+      thisNode = iterator.iterateNext() as HTMLElement;
     }
   } catch (e) {
-    console.error(LOG_PREFIX, `Error: Document tree modified during iteration ${e}`);
+    console.error(
+      LOG_PREFIX,
+      `Error: Document tree modified during iteration ${e}`,
+    );
   }
   return result;
 };
 
-function getReposts(node) {
+function getReposts(node: HTMLElement) {
   const posts = node.querySelectorAll('div[data-testid*="feedItem"]');
-  const reposts = [];
+  const reposts: Node[] = [];
   posts?.forEach((postNode) => {
     const repostHeader = postNode.querySelector('a[aria-label*="Reposted by"]');
     if (repostHeader) {
-      reposts.push(postNode);
+      reposts.push(postNode as HTMLElement);
     }
   });
   return reposts;
 }
 
-let observedTab = null;
+type ObservedTab = {
+  index: number;
+  tabName: string;
+  containerNode: Node;
+  observer: MutationObserver | null;
+};
 
-function addTabObserver(index, tabName, containerNode) {
+let observedTab: ObservedTab | null = null;
+
+function addTabObserver(index: number, tabName: string, containerNode: Node) {
   let observer = null;
   if (!mainPageFeedsWithReposts.includes(tabName ?? '')) {
     observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         const totalReposts = [];
         mutation.addedNodes?.forEach((addedNode) => {
-          const reposts = getReposts(addedNode);
+          const reposts = getReposts(addedNode as HTMLElement);
           if (reposts.length > 0) {
-            reposts?.forEach((r) => r.parentNode.removeChild(r));
+            reposts?.forEach((r) => r.parentNode?.removeChild(r));
             totalReposts.push(...reposts);
           }
         });
@@ -101,7 +111,7 @@ function getVisibleTabs() {
   });
 }
 
-function getActiveFeedContainer(index) {
+function getActiveFeedContainer(index: number) {
   const feedNodes = getOrderedElements(feedContainerXpath, true);
   if (index <= feedNodes.length) {
     return feedNodes[index];
@@ -114,9 +124,9 @@ function observeTabLists() {
     if (element) {
       const activeTabs = getVisibleTabs();
       const activeIndex = activeTabs.findIndex((tab) => tab.isActive);
-      if (activeIndex !== -1) {
+      if (activeIndex !== -1 && activeTabs[activeIndex]) {
         const activeFeedContainerNode = getActiveFeedContainer(activeIndex);
-        if (observedTab?.containerNode !== activeFeedContainerNode) {
+        if (activeFeedContainerNode && observedTab?.containerNode !== activeFeedContainerNode) {
           removeTabObserver();
           addTabObserver(
             activeIndex,
