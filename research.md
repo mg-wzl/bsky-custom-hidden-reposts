@@ -20,3 +20,17 @@ Get this username to hide their reposts
 
 // tab with white text
 //div[contains(@data-testid, "homeScreenFeedTabs-selector-")]//div[contains(@data-testid, "homeScreenFeedTabs-") and contains(@style, "color: rgb(255, 255, 255)")]
+
+
+## This way also covers feeds, not just homescreen
+
+Note than when the user switches to a different feed, old tab elements stay in the tree! (must be a bug)
+So check for visibility
+
+Feed Tabs:
+//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]
+
+Selected tab will have (use OR with these conditions to better cover potential changes):
+- contains(@style, "color: rgb(255, 255, 255)")
+- has an underline element child: div[@style!=""]
+
