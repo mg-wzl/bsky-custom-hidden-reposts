@@ -34,3 +34,9 @@ Selected tab will have (use OR with these conditions to better cover potential c
 - contains(@style, "color: rgb(255, 255, 255)")
 - has an underline element child: div[@style!=""]
 
+On the main page, the only way to identify feed containers is by index (?)
+
+data-testid="followingFeedPage-feed"
+data-testid="customFeedPage-feed"
+
+data-testid="listFeed"

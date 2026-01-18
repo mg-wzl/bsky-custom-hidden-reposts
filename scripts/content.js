@@ -1,5 +1,10 @@
 const tabXpath =
-  '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family") and contains(@style, "color: rgb(255, 255, 255)")]';
+  '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
+
+const feedContainerXpath =
+  '//div[contains(@data-testid,"FeedPage-feed-flatlist")]';
+
+const activeTabColor = 'rgb(255, 255, 255)';
 
 const tabListXpath = '//*[@role="tablist"]';
 
@@ -13,39 +18,12 @@ const getElement = (xpath) => {
   ).singleNodeValue;
 };
 
-const tabObservers = [];
-
-function addTabObserver(tabNode) {
-  const tabName = tabNode.textContent;
-  const observer = new MutationObserver((mutations) => {
-    console.log(`Changes in ${tabName}`);
-    if (element) {
-      console.log('Visible tabs:', getVisibleActiveTabs());
-    }
-  });
-  tabContainer = getElement()
-  tabObservers.push({ tabName, node: tabNode, observer });
-  observer.observe(tabNode, {
-    childList: true,
-    subtree: true,
-  });
-}
-
-function removeTabObserver(tabName) {
-  const observerIndex = tabObservers.findIndex((v) => (v.tabName = tabName));
-  if (observerIndex !== -1) {
-    const observer = tabObservers[observerIndex];
-    tabObservers.splice(observerIndex, 1);
-    observer?.disconnect();
-  }
-}
-
-function getVisibleActiveTabs() {
+const getOrderedElements = (xpath, includeHidden) => {
   const iterator = document.evaluate(
-    tabXpath,
+    xpath,
     document,
     null,
-    XPathResult.UNORDERED_NODE_ITERATOR_TYPE,
+    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
     null,
   );
   const result = [];
@@ -53,7 +31,7 @@ function getVisibleActiveTabs() {
     let thisNode = iterator.iterateNext();
 
     while (thisNode) {
-      if (thisNode.checkVisibility) {
+      if (includeHidden || thisNode.checkVisibility()) {
         result.push(thisNode);
       }
       thisNode = iterator.iterateNext();
@@ -62,32 +40,67 @@ function getVisibleActiveTabs() {
     console.error(`Error: Document tree modified during iteration ${e}`);
   }
   return result;
+};
+
+let observedTab = null;
+
+function addTabObserver(index, tabName, containerNode) {
+  console.log({index, tabName, containerNode});
+  const observer = new MutationObserver((mutations) => {
+    console.log(`Changes in ${observedTab.tabName}`);
+  });
+  observedTab = { index, tabName, containerNode, observer };
+  observer.observe(containerNode, {
+    childList: true,
+    subtree: true,
+  });
 }
 
-function observeTabLists(onElementFound) {
+function removeTabObserver() {
+  if (observedTab) {
+    observedTab.observer?.disconnect();
+    observedTab = null;
+    console.log({observedTab});
+  }
+}
+
+function getVisibleTabs() {
+  const tabNodes = getOrderedElements(tabXpath);
+  return tabNodes.map((node) => {
+    const style = node.style;
+    return {
+      tabNode: node,
+      isActive: style?.getPropertyValue('color') === activeTabColor,
+    };
+  });
+}
+
+function getActiveFeedContainer(index) {
+  const feedNodes = getOrderedElements(feedContainerXpath, true);
+  console.log({feedNodes});
+  if (index <= feedNodes.length) {
+    return feedNodes[index];
+  }
+}
+
+function observeTabLists() {
   const observer = new MutationObserver((mutations) => {
-    console.log({ mutations });
     const element = getElement(tabListXpath);
     if (element) {
-      const visibleTabs = getVisibleActiveTabs();
-      const visibleTabNames = visibleTabs.map((tab) => tab.textContent);
-      const tabsToRemove = tabObservers.filter(
-        (observer) => !visibleTabNames.includes(observer.tabName),
-      );
-      const tabsToAdd = visibleTabs.filter(
-        (tab) => !tabObservers.some((obs) => obs.tabName === tab.textContent),
-      );
-      console.log({
-        visibleTabs: visibleTabs.map((t) => t.textContent),
-        tabsToRemove: tabsToRemove.map((obs) => obs.tabName),
-        tabsToAdd: tabsToAdd.map((t) => t.textContent),
-      });
-      tabsToRemove.every((observer) => {
-        removeTabObserver(observer);
-      });
-      tabsToAdd.every((tab) => {
-        addTabObserver(tab);
-      });
+      const activeTabs = getVisibleTabs();
+      const activeIndex = activeTabs.findIndex((tab) => tab.isActive);
+      if (activeIndex !== -1) {
+        const activeFeedContainerNode = getActiveFeedContainer(activeIndex);
+        if (observedTab?.containerNode !== activeFeedContainerNode) {
+          removeTabObserver();
+          addTabObserver(
+            activeIndex,
+            activeTabs[activeIndex].tabNode.textContent,
+            activeFeedContainerNode,
+          );
+        }
+      }
+      console.log('activeTabs', activeTabs);
     }
   });
 
