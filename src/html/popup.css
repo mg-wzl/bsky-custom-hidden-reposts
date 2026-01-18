@@ -1,9 +1,5 @@
 body {
   width: 20rem;
-  background-color: #222;
-}
-
-h3,
-p {
-  color: #FFF;
+  background-color: #ccc;
+  padding: 0px 16px 12px 16px;
 }

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,10 +8,11 @@
     <script src="./popup.js" type="module"></script>
   </head>
   <body>
-    <p>Hi, I'm a popup.</p>
-    <label for="isEnabledCheckbox">Turn on/off:</label> 
-    <input type="checkbox" id="isEnabledCheckbox">
-
-    
+    <h2>Bluesky - Hide Reposts</h2>
+    <p>When enabled, hides reposts in all feeds except Following. Only works on the main page and in English.</p>
+    <div style="display: flex; align-items: center;">
+      <label for="isEnabledCheckbox">Enabled:</label>
+      <input type="checkbox" id="isEnabledCheckbox" />
+    </div>
   </body>
 </html>
