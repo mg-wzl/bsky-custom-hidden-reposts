@@ -16,7 +16,7 @@
   "web_accessible_resources": [
     {
       "matches": ["*://bsky.app/*"],
-      "resources": ["scripts/*.js"]
+      "resources": ["transpiled/scripts/*.js"]
     }
   ],
   "icons": {

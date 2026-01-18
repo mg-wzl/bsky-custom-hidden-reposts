@@ -4,6 +4,9 @@ const isEnabledCheckbox = document.getElementById('isEnabledCheckbox');
 isEnabledCheckbox.addEventListener('click', onEnabledCheckboxClicked);
 
 function setIsExtensionEnabled(isEnabled) {
+  chrome.action.setIcon({
+    path: isEnabled ? '/icons/icon-48.png' : '/icons/icon-disabled-48.png',
+  });
   chrome.storage.sync.set({ [KEY_ENABLED]: isEnabled }).then(() => {
     console.log('Value is set', isEnabled);
   });
