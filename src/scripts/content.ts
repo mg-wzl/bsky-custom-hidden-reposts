@@ -1,18 +1,35 @@
 import { getSettings } from './getSettings.js';
 
-const LOG_PREFIX = 'WZL_';
+const LOG_PREFIX = '[bsky_hide_reposts]';
 
 const tabXpath =
   '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
 
 const feedContainerXpath =
-  '//div[contains(@data-testid,"FeedPage-feed-flatlist")]';
+  '//div[contains(@data-testid,"FeedPage-feed-flatlist")]/div[last()]/div';
 
 const mainPageFeedsWithReposts = ['Following'];
 
 const activeTabColor = 'rgb(255, 255, 255)';
 
 const tabListXpath = '//*[@role="tablist"]';
+
+/* this div is added at the end of the feed to trigger
+   pagination if there's too few posts on the screen */
+const EXTRA_HEIGHT_DIV = createExtaHeightDiv();
+
+window.addEventListener('resize', (e) => {
+  EXTRA_HEIGHT_DIV.style.height = window.innerHeight + 'px';
+});
+
+function createExtaHeightDiv() {
+  const div = document.createElement('div');
+  div.style.width = '100px';
+  div.style.height = window.innerHeight + 'px';
+  div.classList.add('wzl-extra-height');
+  div.style.background = 'transparent';
+  return div;
+}
 
 const getElement = (xpath: string) => {
   return document.evaluate(
@@ -60,7 +77,7 @@ function getReposts(node: HTMLElement) {
       reposts.push(postNode as HTMLElement);
     }
   });
-  return reposts;
+  return { posts, reposts };
 }
 
 type ObservedTab = {
@@ -76,16 +93,28 @@ function addTabObserver(index: number, tabName: string, containerNode: Node) {
   let observer = null;
   if (!mainPageFeedsWithReposts.includes(tabName ?? '')) {
     observer = new MutationObserver((mutations) => {
+      const totalReposts = [];
+      const totalPosts = [];
       mutations.forEach((mutation) => {
-        const totalReposts = [];
         mutation.addedNodes?.forEach((addedNode) => {
-          const reposts = getReposts(addedNode as HTMLElement);
+          const { posts, reposts } = getReposts(addedNode as HTMLElement);
+          if (posts.length > 0) {
+            totalPosts.push(...posts);
+          }
           if (reposts.length > 0) {
             reposts?.forEach((r) => r.parentNode?.removeChild(r));
             totalReposts.push(...reposts);
           }
         });
       });
+      if (
+        totalPosts.length > 0 &&
+        totalPosts.length - totalReposts.length < 10
+      ) {
+        console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
+        EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
+        containerNode.appendChild(EXTRA_HEIGHT_DIV);
+      }
     });
     observer.observe(containerNode, {
       childList: true,
