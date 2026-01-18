@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Bluesky Hide Reposts",
+  "version": "0.1",
+  "description": "Customize hiding reposts in your Bluesky feeds",
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": [
+        "*://bsky.app/*"
+      ]
+    }
+  ]
+}
