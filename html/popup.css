@@ -1,5 +1,9 @@
 body {
   width: 20rem;
-  background-color: #ccc;
+  background-color: #FFF;
   padding: 0px 16px 12px 16px;
+}
+
+.disabled {
+  color: #666;
 }
