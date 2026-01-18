@@ -1,8 +1,12 @@
+const LOG_PREFIX = 'WZL_';
+
 const tabXpath =
   '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
 
 const feedContainerXpath =
   '//div[contains(@data-testid,"FeedPage-feed-flatlist")]';
+
+const mainPageFeedsWithReposts = ['Following'];
 
 const activeTabColor = 'rgb(255, 255, 255)';
 
@@ -37,30 +41,52 @@ const getOrderedElements = (xpath, includeHidden) => {
       thisNode = iterator.iterateNext();
     }
   } catch (e) {
-    console.error(`Error: Document tree modified during iteration ${e}`);
+    console.error(LOG_PREFIX, `Error: Document tree modified during iteration ${e}`);
   }
   return result;
 };
 
+function getReposts(node) {
+  const posts = node.querySelectorAll('div[data-testid*="feedItem"]');
+  const reposts = [];
+  posts?.forEach((postNode) => {
+    const repostHeader = postNode.querySelector('a[aria-label*="Reposted by"]');
+    if (repostHeader) {
+      reposts.push(postNode);
+    }
+  });
+  return reposts;
+}
+
 let observedTab = null;
 
 function addTabObserver(index, tabName, containerNode) {
-  console.log({index, tabName, containerNode});
-  const observer = new MutationObserver((mutations) => {
-    console.log(`Changes in ${observedTab.tabName}`);
-  });
+  let observer = null;
+  if (!mainPageFeedsWithReposts.includes(tabName ?? '')) {
+    observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        const totalReposts = [];
+        mutation.addedNodes?.forEach((addedNode) => {
+          const reposts = getReposts(addedNode);
+          if (reposts.length > 0) {
+            reposts?.forEach((r) => r.parentNode.removeChild(r));
+            totalReposts.push(...reposts);
+          }
+        });
+      });
+    });
+    observer.observe(containerNode, {
+      childList: true,
+      subtree: true,
+    });
+  }
   observedTab = { index, tabName, containerNode, observer };
-  observer.observe(containerNode, {
-    childList: true,
-    subtree: true,
-  });
 }
 
 function removeTabObserver() {
   if (observedTab) {
     observedTab.observer?.disconnect();
     observedTab = null;
-    console.log({observedTab});
   }
 }
 
@@ -77,7 +103,6 @@ function getVisibleTabs() {
 
 function getActiveFeedContainer(index) {
   const feedNodes = getOrderedElements(feedContainerXpath, true);
-  console.log({feedNodes});
   if (index <= feedNodes.length) {
     return feedNodes[index];
   }
@@ -98,9 +123,9 @@ function observeTabLists() {
             activeTabs[activeIndex].tabNode.textContent,
             activeFeedContainerNode,
           );
+          console.log(LOG_PREFIX, 'activeTab:', observedTab?.tabName);
         }
       }
-      console.log('activeTabs', activeTabs);
     }
   });
 
@@ -110,5 +135,5 @@ function observeTabLists() {
   });
 }
 
-console.log('Script started!');
+console.log(LOG_PREFIX, 'Script started!');
 observeTabLists();
