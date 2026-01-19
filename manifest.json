@@ -10,6 +10,10 @@
       "matches": ["*://bsky.app/*"]
     }
   ],
+  "background": {
+    "service_worker": "transpiled/background/service-worker.js",
+    "type": "module"
+  },
   "action": {
     "default_popup": "html/popup.html"
   },

@@ -1,6 +1,5 @@
+import { LOG_PREFIX } from './constants.js';
 import { getSettings } from './getSettings.js';
-
-const LOG_PREFIX = '[bsky_hide_reposts]';
 
 const tabXpath =
   '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
@@ -208,6 +207,7 @@ chrome.storage.sync.onChanged.addListener((changes) => {
 
 (async () => {
   let initialSettings = await getSettings();
+  console.log(LOG_PREFIX, 'settings:', initialSettings);
   if (initialSettings.enabled) {
     observeTabLists();
   }
