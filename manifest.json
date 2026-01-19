@@ -11,16 +11,16 @@
     }
   ],
   "background": {
-    "service_worker": "transpiled/background/service-worker.js",
+    "service_worker": "js/background/service-worker.js",
     "type": "module"
   },
   "action": {
-    "default_popup": "transpiled/html/popup.html"
+    "default_popup": "js/html/popup.html"
   },
   "web_accessible_resources": [
     {
       "matches": ["*://bsky.app/*"],
-      "resources": ["transpiled/scripts/*.js"]
+      "resources": ["js/scripts/*.js"]
     }
   ],
   "icons": {

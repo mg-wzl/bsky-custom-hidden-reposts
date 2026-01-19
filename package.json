@@ -25,7 +25,7 @@
   "contributors": [],
   "scripts": {
     "clean": "rm -rf dist",
-    "compile": "npx tsc && cp ./src/html/*.{html,css} ./transpiled/html",
+    "compile": "npx tsc && cp ./src/html/*.{html,css} ./js/html",
     "copy-assets": "./copy-assets.sh",
     "build": "npm run clean && npm run compile && npm run copy-assets"
   },
