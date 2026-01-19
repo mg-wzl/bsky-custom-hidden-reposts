@@ -10,13 +10,17 @@
       "matches": ["*://bsky.app/*"]
     }
   ],
+  "background": {
+    "service_worker": "js/background/service-worker.js",
+    "type": "module"
+  },
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "js/popup/popup.html"
   },
   "web_accessible_resources": [
     {
       "matches": ["*://bsky.app/*"],
-      "resources": ["transpiled/scripts/*.js"]
+      "resources": ["js/scripts/*.js"]
     }
   ],
   "icons": {
