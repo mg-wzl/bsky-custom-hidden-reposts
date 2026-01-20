@@ -10,5 +10,5 @@ export type ExtensionSettings = {
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
   [KEY_ENABLED]: true,
-  [KEY_IGNORED_TABS]: ['Following', 'List with reposts'],
+  [KEY_IGNORED_TABS]: ['Following'],
 };
