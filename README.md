@@ -1,10 +1,14 @@
 # bsky-custom-hidden-reposts
 
 ## Chrome extension for hiding reposts on Bluesky
-Hides reposts from all feeds on the main page, except for "Following".
-Current version (v.0.1.x) only works in English.
+
+When enabled, hides reposts from the feeds on the Home page of Bluesky.
+
+You can specify which feeds need to show reposts (by default, it's "Following").
 
 ![Screenshot](screenshot.png)
+
+*This extension relies on Bluesky page layout. If the layout changes, the extension may break*
 
 # Installation
 
