@@ -1,4 +1,4 @@
-import type { ExtensionSettings } from './types.js';
+import type { ExtensionSettings } from './constants.js';
 
 export async function getSettings(): Promise<ExtensionSettings> {
   const promise = new Promise<ExtensionSettings>((resolve, reject) => {

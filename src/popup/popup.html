@@ -10,7 +10,7 @@
   </head>
   <body>
     <div id="container">
-      <div style="display: flex; align-items: center; width: 100%">
+      <div class="checkboxContainer">
         <h2 style="flex: 1">Bluesky - Hide Reposts</h2>
         <label class="switch">
           <input type="checkbox" id="isEnabledCheckbox" />
@@ -18,10 +18,15 @@
         </label>
       </div>
 
-      <p>
-        When enabled, hides reposts in all feeds except Following. Only works on
-        the main page and in English.
-      </p>
+      <p>When enabled, hides reposts in all feeds on the Home page. Currently only works in English.</p>
+      
+
+      <div style="width: 100%">
+        <label for="ignoredTabsInput">Show reposts in (one name per line):</label>
+        <textarea id="ignoredTabsInput" rows="5" cols="45">Following</textarea>
+      </div>
+
+      <p><b>Refresh the page after changing the settings.</b></p>
     </div>
   </body>
 </html>
