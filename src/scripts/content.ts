@@ -62,8 +62,11 @@ function getReposts(node: HTMLElement) {
   const posts = node.querySelectorAll('div[data-testid*="feedItem"]');
   const reposts: Node[] = [];
   posts?.forEach((postNode) => {
-    const repostHeader = postNode.querySelector('a[aria-label*="Reposted by"]');
-    if (repostHeader) {
+    // to avoid parsing by link text, relying on the page sctructure. Prone to breaking :(
+    const repostHeader = postNode.querySelector(
+      'div[data-testid*="feedItem"] a[href^="/profile/"] > svg + div > div > div',
+    );
+    if (repostHeader && !!repostHeader.textContent) {
       reposts.push(postNode as HTMLElement);
     }
   });
