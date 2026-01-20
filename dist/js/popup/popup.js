@@ -1,8 +1,12 @@
-import { KEY_ENABLED } from '../scripts/constants.js';
+import { KEY_ENABLED, KEY_IGNORED_TABS } from '../scripts/constants.js';
+// enabled checkbox
 const isEnabledCheckbox = document.getElementById('isEnabledCheckbox');
-const container = document.getElementById('container');
-console.log({ container });
 isEnabledCheckbox?.addEventListener('click', onEnabledCheckboxClicked);
+function onEnabledCheckboxClicked() {
+    setIsExtensionEnabled(this.checked);
+}
+// whole container
+const container = document.getElementById('container');
 function setIsExtensionEnabled(isEnabled) {
     if (isEnabled) {
         container?.classList.remove('disabled');
@@ -17,14 +21,24 @@ function setIsExtensionEnabled(isEnabled) {
         console.log('Value is set', isEnabled);
     });
 }
-function onEnabledCheckboxClicked() {
-    setIsExtensionEnabled(this.checked);
-}
-chrome.storage.sync.get({ [KEY_ENABLED]: true }, (items) => {
+// show reposts text area
+const ignoredTabsInput = document.getElementById('ignoredTabsInput');
+ignoredTabsInput?.addEventListener('blur', (e) => {
+    console.log('blur', e);
+    const ignoredTabsText = ignoredTabsInput?.value?.split('\n') ?? [];
+    chrome.storage.sync.set({ [KEY_IGNORED_TABS]: ignoredTabsText });
+});
+chrome.storage.sync.get(null, (items) => {
     console.log({ items });
+    // initialize checkbox
     const isEnabled = Boolean(items[KEY_ENABLED] !== undefined ? items[KEY_ENABLED] : true);
     if (isEnabledCheckbox) {
         isEnabledCheckbox.checked = isEnabled;
         setIsExtensionEnabled(isEnabled);
+    }
+    // initialize textarea
+    const ignoredTabs = (items[KEY_IGNORED_TABS] ?? []);
+    if (ignoredTabs.length && ignoredTabsInput) {
+        ignoredTabsInput.value = ignoredTabs.join('\n');
     }
 });

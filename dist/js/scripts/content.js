@@ -1,8 +1,8 @@
-import { LOG_PREFIX } from './constants.js';
+import { KEY_ENABLED, KEY_IGNORED_TABS, LOG_PREFIX } from './constants.js';
 import { getSettings } from './getSettings.js';
 const tabXpath = '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
 const feedContainerXpath = '//div[contains(@data-testid,"FeedPage-feed-flatlist")]/div[last()]/div';
-const mainPageFeedsWithReposts = ['Following'];
+const ignoredTabs = [];
 const activeTabColor = 'rgb(255, 255, 255)';
 const tabListXpath = '//*[@role="tablist"]';
 /* this div is added at the end of the feed to trigger
@@ -20,7 +20,8 @@ function createExtaHeightDiv() {
     return div;
 }
 const getElement = (xpath) => {
-    return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
+        .singleNodeValue;
 };
 const getOrderedElements = (xpath, includeHidden = false) => {
     const iterator = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
@@ -43,8 +44,9 @@ function getReposts(node) {
     const posts = node.querySelectorAll('div[data-testid*="feedItem"]');
     const reposts = [];
     posts?.forEach((postNode) => {
-        const repostHeader = postNode.querySelector('a[aria-label*="Reposted by"]');
-        if (repostHeader) {
+        // to avoid parsing by link text, relying on the page sctructure. Prone to breaking :(
+        const repostHeader = postNode.querySelector('div[data-testid*="feedItem"] a[href^="/profile/"] > svg + div > div > div');
+        if (repostHeader && !!repostHeader.textContent) {
             reposts.push(postNode);
         }
     });
@@ -53,7 +55,12 @@ function getReposts(node) {
 let observedTab = null;
 function addTabObserver(index, tabName, containerNode) {
     let observer = null;
-    if (!mainPageFeedsWithReposts.includes(tabName ?? '')) {
+    console.log({
+        tabName,
+        ignoredTabs,
+        included: ignoredTabs.includes(tabName?.toLocaleLowerCase() ?? ''),
+    });
+    if (!ignoredTabs.includes(tabName?.toLocaleLowerCase() ?? '')) {
         observer = new MutationObserver((mutations) => {
             const totalReposts = [];
             const totalPosts = [];
@@ -69,8 +76,7 @@ function addTabObserver(index, tabName, containerNode) {
                     }
                 });
             });
-            if (totalPosts.length > 0 &&
-                totalPosts.length - totalReposts.length < 10) {
+            if (totalPosts.length > 0 && totalPosts.length - totalReposts.length < 10) {
                 console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
                 EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
                 containerNode.appendChild(EXTRA_HEIGHT_DIV);
@@ -117,8 +123,7 @@ function observeTabLists() {
             const activeIndex = activeTabs.findIndex((tab) => tab.isActive);
             if (activeIndex !== -1 && activeTabs[activeIndex]) {
                 const activeFeedContainerNode = getActiveFeedContainer(activeIndex);
-                if (activeFeedContainerNode &&
-                    observedTab?.containerNode !== activeFeedContainerNode) {
+                if (activeFeedContainerNode && observedTab?.containerNode !== activeFeedContainerNode) {
                     removeTabObserver();
                     addTabObserver(activeIndex, activeTabs[activeIndex].tabNode.textContent, activeFeedContainerNode);
                     console.log(LOG_PREFIX, 'activeTab:', observedTab?.tabName);
@@ -139,15 +144,24 @@ function stopObservingChanges() {
 console.log(LOG_PREFIX, 'Script started!');
 chrome.storage.sync.onChanged.addListener((changes) => {
     for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-        if (key === 'enabled') {
-            if (newValue === false) {
-                console.log(LOG_PREFIX, 'Turned off');
-                stopObservingChanges();
-            }
-            else {
-                console.log(LOG_PREFIX, 'Turned on');
-                observeTabLists();
-            }
+        switch (key) {
+            case KEY_ENABLED:
+                if (newValue === false) {
+                    console.log(LOG_PREFIX, 'Turned off');
+                    stopObservingChanges();
+                }
+                else {
+                    console.log(LOG_PREFIX, 'Turned on');
+                    observeTabLists();
+                }
+                break;
+            case KEY_IGNORED_TABS:
+                console.log({ newValue, oldValue });
+                if (Array.isArray(newValue)) {
+                    ignoredTabs.splice(0, ignoredTabs.length);
+                    ignoredTabs.push(...newValue.map((v) => v.toLocaleLowerCase()));
+                }
+                break;
         }
     }
 });
@@ -156,5 +170,8 @@ chrome.storage.sync.onChanged.addListener((changes) => {
     console.log(LOG_PREFIX, 'settings:', initialSettings);
     if (initialSettings.enabled) {
         observeTabLists();
+    }
+    if (Array.isArray(initialSettings.ignoredTabs)) {
+        ignoredTabs.push(...initialSettings.ignoredTabs?.map((v) => v.toLocaleLowerCase()));
     }
 })();

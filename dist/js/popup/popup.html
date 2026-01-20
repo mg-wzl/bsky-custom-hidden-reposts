@@ -10,18 +10,22 @@
   </head>
   <body>
     <div id="container">
-      <div style="display: flex; align-items: center; width: 100%">
+      <div class="checkboxContainer">
         <h2 style="flex: 1">Bluesky - Hide Reposts</h2>
         <label class="switch">
           <input type="checkbox" id="isEnabledCheckbox" />
           <span class="slider round"></span>
         </label>
       </div>
+      <p>When enabled, hides reposts in all feeds on the Home page, <u>except for the specified below</u>.<br/>You can show reposts in specific feeds by adding their name.</p>
+      
+      <div style="width: 100%">
+        <label for="ignoredTabsInput">Show reposts in feeds (one name per line):</label>
+        <textarea id="ignoredTabsInput" rows="5" cols="45"></textarea>
+      </div>
 
-      <p>
-        When enabled, hides reposts in all feeds except Following. Only works on
-        the main page and in English.
-      </p>
+      <p><b>Refresh the page to apply the changes.</b></p>
+      <p><i>This extension relies on Bluesky page layout. If the layout changes, the extension may break.</i></p>
     </div>
   </body>
 </html>
