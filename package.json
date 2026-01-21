@@ -24,9 +24,8 @@
   },
   "contributors": [],
   "scripts": {
-    "clean": "rm -rf dist",
-    "compile": "npx tsc && cp ./src/popup/*.{html,css} ./js/popup",
-    "build": "npm run clean && npm run compile && ./copy-assets.sh && ./make-archive.sh"
+    "compile": "rm -rf js && npx tsc && cp ./src/popup/*.{html,css} ./js/popup",
+    "build": "npm run compile && ./build.sh"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.33",
