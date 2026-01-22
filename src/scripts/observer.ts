@@ -7,8 +7,17 @@ import {
   findPostsAndReposts,
 } from './parser.js';
 
-// ############## Feed observer ####################
+/** Feeds which will not be hiding reposts */
+const ignoredFeedNames: string[] = [];
 
+export function setIgnoredFeedNames(newValue: string[]) {
+  if (ignoredFeedNames.length > 0) {
+    ignoredFeedNames.splice(0, ignoredFeedNames.length);
+  }
+  ignoredFeedNames.push(...newValue.map((v) => v.toLocaleLowerCase()));
+}
+
+// ############## Feed observer ####################
 type ObservedFeed = {
   index: number;
   tabName: string;
@@ -17,9 +26,6 @@ type ObservedFeed = {
 };
 
 let activeFeed: ObservedFeed | null = null;
-
-/** Feeds which will not be hiding reposts */
-const ignoredFeedNames: string[] = [];
 
 /** Monitors changes in the feed element, and removes reposts from it. */
 function addActiveFeedObserver(index: number, feedName: string, containerNode: Node) {
@@ -72,7 +78,6 @@ function removeActiveFeedObserver() {
 }
 
 // ############## Tabs observer ####################
-
 let tabsObserver: MutationObserver | null = null;
 
 /**
@@ -114,11 +119,4 @@ export function stopObservingDocument() {
   tabsObserver?.disconnect();
   tabsObserver = null;
   removeActiveFeedObserver();
-}
-
-export function setIgnoredFeedNames(newValue: string[]) {
-  if (ignoredFeedNames.length > 0) {
-    ignoredFeedNames.splice(0, ignoredFeedNames.length);
-  }
-  ignoredFeedNames.push(...newValue.map((v) => v.toLocaleLowerCase()));
 }
