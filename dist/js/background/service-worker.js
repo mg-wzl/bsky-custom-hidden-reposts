@@ -6,6 +6,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     const settings = await getSettings();
     if (settings[KEY_ENABLED] === undefined) {
         // initialize settings
-        chrome.storage.sync.set(DEFAULT_SETTINGS);
+        chrome.storage.local.set(DEFAULT_SETTINGS);
     }
 });

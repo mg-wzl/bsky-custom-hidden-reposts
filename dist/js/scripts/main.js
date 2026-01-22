@@ -12,7 +12,7 @@ function stop() {
     stopObservingDocument();
 }
 /** Look for changes in settings */
-chrome.storage.sync.onChanged.addListener(async (changes) => {
+chrome.storage.local.onChanged.addListener(async (changes) => {
     for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
         switch (key) {
             case KEY_ENABLED:

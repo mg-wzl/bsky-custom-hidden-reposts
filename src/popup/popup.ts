@@ -21,7 +21,7 @@ function setIsExtensionEnabled(isEnabled: boolean) {
   chrome.action.setIcon({
     path: isEnabled ? '/icons/icon-48.png' : '/icons/icon-disabled-48.png',
   });
-  chrome.storage.sync.set({ [KEY_ENABLED]: isEnabled }).then(() => {
+  chrome.storage.local.set({ [KEY_ENABLED]: isEnabled }).then(() => {
     console.log('Value is set', isEnabled);
   });
 }
@@ -33,10 +33,10 @@ const ignoredTabsInput: HTMLInputElement | null = document.getElementById(
 ignoredTabsInput?.addEventListener('blur', (e) => {
   console.log('blur', e);
   const ignoredTabsText = ignoredTabsInput?.value?.split('\n') ?? [];
-  chrome.storage.sync.set({ [KEY_IGNORED_TABS]: ignoredTabsText });
+  chrome.storage.local.set({ [KEY_IGNORED_TABS]: ignoredTabsText });
 });
 
-chrome.storage.sync.get(null, (items) => {
+chrome.storage.local.get(null, (items) => {
   console.log({ items });
   // initialize checkbox
   const isEnabled = Boolean(items[KEY_ENABLED] !== undefined ? items[KEY_ENABLED] : true);
