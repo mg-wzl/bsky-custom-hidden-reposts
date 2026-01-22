@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Bluesky Hide Reposts",
-  "version": "0.3.2",
-  "description": "Customize hiding reposts in your Bluesky feeds",
+  "version": "0.3.3",
+  "description": "Customize showing or hiding reposts in specific feeds on Bluesky Home page",
   "permissions": ["storage"],
   "content_scripts": [
     {

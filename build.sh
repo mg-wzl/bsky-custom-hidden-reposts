@@ -9,4 +9,5 @@ cp -r ./icons ./dist/icons
 
 # create downloadable chrome extension archive
 rm -f ./download/bsky-custom-hidden-reposts.zip
-zip -r ./download/bsky-custom-hidden-reposts.zip ./dist/*
+cd ./dist
+zip -r ../download/bsky-custom-hidden-reposts.zip ./*

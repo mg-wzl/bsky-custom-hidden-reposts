@@ -6,8 +6,6 @@ When enabled, hides reposts from the feeds on the Home page of Bluesky.
 
 You can specify which feeds need to show reposts (by default, it's "Following").
 
-![Screenshot](screenshot.png)
-
 *This extension relies on Bluesky page layout. If the layout changes, the extension may break*
 
 # Installation
@@ -25,4 +23,5 @@ I may post it to Chrome marketplace later, but for now you'd need to install it 
     - disable Developer Mode
 4. It's installed!
 
+![Screenshot](screenshot.png)
 
