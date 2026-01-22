@@ -50,3 +50,11 @@ chrome.storage.sync.get(null, (items) => {
     ignoredTabsInput.value = ignoredTabs.join('\n');
   }
 });
+
+// show version
+const versionElement = document.getElementById('version') as HTMLSpanElement;
+
+if (versionElement) {
+  const manifestData = chrome.runtime.getManifest();
+  versionElement.textContent = `(v${manifestData.version})`;
+}

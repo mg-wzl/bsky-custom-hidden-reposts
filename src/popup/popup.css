@@ -10,8 +10,27 @@ textarea {
   margin-top: 4px;
 }
 
+.header {
+  flex: 1;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.icon {
+  width: 25px;
+  height: 25px;
+}
+
+#version {
+  margin-top: -8px;
+}
+
 .disabled {
   color: #666;
+  filter: grayscale(100);
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
 }
 
 .checkboxContainer {

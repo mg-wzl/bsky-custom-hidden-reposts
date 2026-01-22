@@ -24,7 +24,7 @@
   },
   "contributors": [],
   "scripts": {
-    "compile": "rm -rf js && npx tsc && cp ./src/popup/*.{html,css} ./js/popup",
+    "compile": "rm -rf js && npx tsc && cp ./src/popup/*.{html,css,png} ./js/popup",
     "build": "npm run compile && ./build.sh"
   },
   "devDependencies": {

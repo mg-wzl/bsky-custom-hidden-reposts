@@ -28,7 +28,7 @@ chrome.storage.sync.onChanged.addListener(async (changes) => {
         }
         break;
       case KEY_IGNORED_TABS:
-        console.log(LOG_PREFIX, 'ignored tabs changed:', { newValue, oldValue });
+        console.log(LOG_PREFIX, 'Ignored tabs changed:', newValue);
         stop();
         start();
         break;
