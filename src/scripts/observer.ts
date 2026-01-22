@@ -52,14 +52,13 @@ function addActiveFeedObserver(index: number, feedName: string, containerNode: N
           }
         });
       });
-      if (totalPosts.length > 0 && totalReposts.length > 0) {
+      if (totalPosts.length > 0 && totalPosts.length - totalReposts.length < 10) {
         console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
-        if (totalPosts.length - totalReposts.length < 10) {
           // If less then 10 posts were shown, reattach an extra height element to the end of the feed container.
           // This is used to avoid stuck pagination
           removeExtraHeight();
           containerNode.appendChild(EXTRA_HEIGHT_DIV);
-        }
+        
       }
     });
     observer.observe(containerNode, {

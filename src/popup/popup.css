@@ -8,6 +8,7 @@ textarea {
   resize: none;
   width: 100%;
   margin-top: 4px;
+  padding: 5px;
 }
 
 .fieldContainer {
@@ -26,13 +27,12 @@ textarea {
 .icon {
   width: 20px;
   height: 20px;
-  margin-left: 2px;
   margin-right: 8px;
 }
 
 #version {
   margin-top: -12px;
-  margin-left: 30px;
+  margin-left: 28px;
   font-size: x-small;
 }
 
