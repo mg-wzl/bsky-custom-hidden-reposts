@@ -1,5 +1,5 @@
 import { KEY_ENABLED, KEY_IGNORED_TABS, LOG_PREFIX } from "./constants.js";
-import { setIgnoredFeedNames, startObservingDocument, stopObservingDocument } from "./content.js";
+import { setIgnoredFeedNames, startObservingDocument, stopObservingDocument } from "./observer.js";
 import { getSettings } from "./getSettings.js";
 
 /** Look for changes in settings */
