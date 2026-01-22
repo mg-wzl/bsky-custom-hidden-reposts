@@ -16,3 +16,7 @@ function createExtaHeightDiv() {
 window.addEventListener('resize', (e) => {
   EXTRA_HEIGHT_DIV.style.height = window.innerHeight + 'px';
 });
+
+export function removeExtraHeight() {
+  EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
+}

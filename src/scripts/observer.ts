@@ -1,5 +1,5 @@
 import { LOG_PREFIX } from './constants.js';
-import { EXTRA_HEIGHT_DIV } from './extraHeight.js';
+import { EXTRA_HEIGHT_DIV, removeExtraHeight } from './extraHeight.js';
 import {
   findFeedContainerByIndex,
   findVisibleTabs,
@@ -55,9 +55,9 @@ function addActiveFeedObserver(index: number, feedName: string, containerNode: N
       if (totalPosts.length > 0 && totalReposts.length > 0) {
         console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
         if (totalPosts.length - totalReposts.length < 10) {
-          // if less then 10 posts were left untouched, reattach an extra height element to the end of the feed container
-          // this is used to avoid stuck pagination
-          EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
+          // If less then 10 posts were left untouched, reattach an extra height element to the end of the feed container.
+          // This is used to avoid stuck pagination
+          removeExtraHeight();
           containerNode.appendChild(EXTRA_HEIGHT_DIV);
         }
       }
@@ -74,6 +74,7 @@ function removeActiveFeedObserver() {
   if (activeFeed) {
     activeFeed.observer?.disconnect();
     activeFeed = null;
+    removeExtraHeight();
   }
 }
 
