@@ -10,7 +10,8 @@ import {
 /** Feeds which will not be hiding reposts */
 const ignoredFeedNames: string[] = [];
 
-export function setIgnoredFeedNames(newValue: string[]) {
+function setIgnoredFeedNames(newValue: string[]) {
+  console.log(LOG_PREFIX, 'ignored feeds:', newValue);
   if (ignoredFeedNames.length > 0) {
     ignoredFeedNames.splice(0, ignoredFeedNames.length);
   }
@@ -20,7 +21,7 @@ export function setIgnoredFeedNames(newValue: string[]) {
 // ############## Feed observer ####################
 type ObservedFeed = {
   index: number;
-  tabName: string;
+  feedName: string;
   containerNode: Node;
   observer: MutationObserver | null;
 };
@@ -30,11 +31,10 @@ let activeFeed: ObservedFeed | null = null;
 /** Monitors changes in the feed element, and removes reposts from it. */
 function addActiveFeedObserver(index: number, feedName: string, containerNode: Node) {
   let observer = null;
-  const isIgnored = ignoredFeedNames.includes(feedName?.toLocaleLowerCase() ?? '');
-  console.log(LOG_PREFIX, 'active feed changed', {
+  const isIgnored = ignoredFeedNames.includes(feedName ?? '');
+  console.log(LOG_PREFIX, 'active feed:', {
     feedName,
     isIgnored,
-    ignoredFeedNames,
   });
   if (!isIgnored) {
     observer = new MutationObserver((mutations) => {
@@ -55,7 +55,7 @@ function addActiveFeedObserver(index: number, feedName: string, containerNode: N
       if (totalPosts.length > 0 && totalReposts.length > 0) {
         console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
         if (totalPosts.length - totalReposts.length < 10) {
-          // If less then 10 posts were left untouched, reattach an extra height element to the end of the feed container.
+          // If less then 10 posts were shown, reattach an extra height element to the end of the feed container.
           // This is used to avoid stuck pagination
           removeExtraHeight();
           containerNode.appendChild(EXTRA_HEIGHT_DIV);
@@ -67,14 +67,14 @@ function addActiveFeedObserver(index: number, feedName: string, containerNode: N
       subtree: true,
     });
   }
-  activeFeed = { index, tabName: feedName, containerNode, observer };
+  activeFeed = { index, feedName, containerNode, observer };
 }
 
 function removeActiveFeedObserver() {
+  removeExtraHeight();
   if (activeFeed) {
     activeFeed.observer?.disconnect();
     activeFeed = null;
-    removeExtraHeight();
   }
 }
 
@@ -85,7 +85,8 @@ let tabsObserver: MutationObserver | null = null;
  * Observes the document to detect when the active tab changes.
  * Creates an observer for the currently selected feed.
  */
-export function startObservingDocument() {
+export function startObservingDocument(ignoredFeedNames: string[]) {
+  setIgnoredFeedNames(ignoredFeedNames);
   if (tabsObserver) {
     throw Error('Tabs observer already exists, cannot create a new one');
   }
@@ -101,10 +102,9 @@ export function startObservingDocument() {
           removeActiveFeedObserver();
           addActiveFeedObserver(
             activeIndex,
-            visibleTabs[activeIndex].tabNode.textContent,
+            visibleTabs[activeIndex].tabNode.textContent?.toLocaleLowerCase(),
             activeFeedContainerNode,
           );
-          console.log(LOG_PREFIX, 'activeTab:', activeFeed?.tabName);
         }
       }
     }
@@ -117,7 +117,7 @@ export function startObservingDocument() {
 }
 
 export function stopObservingDocument() {
+  removeActiveFeedObserver();
   tabsObserver?.disconnect();
   tabsObserver = null;
-  removeActiveFeedObserver();
 }
