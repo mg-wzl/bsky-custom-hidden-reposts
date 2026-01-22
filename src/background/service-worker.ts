@@ -1,10 +1,9 @@
 import { DEFAULT_SETTINGS, KEY_ENABLED, LOG_PREFIX } from '../scripts/constants.js';
 import { getSettings } from '../scripts/getSettings.js';
 
-// Check whether new version is installed
+// Triggered when the extension is installed or updated
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log(LOG_PREFIX, 'onInstalled: ', details);
-  console.log('Check that settings are initiated, updated if needed.');
+  // Check that settings are initialized
   const settings = await getSettings();
   if (settings[KEY_ENABLED] === undefined) {
     // initialize settings

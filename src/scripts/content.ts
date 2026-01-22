@@ -1,101 +1,42 @@
-import { KEY_ENABLED, KEY_IGNORED_TABS, LOG_PREFIX } from './constants.js';
-import { getSettings } from './getSettings.js';
+import { LOG_PREFIX } from './constants.js';
+import { EXTRA_HEIGHT_DIV } from './extraHeight.js';
+import {
+  findFeedContainerByIndex,
+  findVisibleTabs,
+  findTabsRow,
+  findPostsAndReposts,
+} from './parser.js';
 
-const tabXpath =
-  '//*[@role="tablist"]//*[contains(@data-testid,"-selector-")]//*[contains(@style, "font-family")]';
+// ############## Feed observer ####################
 
-const feedContainerXpath = '//div[contains(@data-testid,"FeedPage-feed-flatlist")]/div[last()]/div';
-
-const ignoredTabs: string[] = [];
-
-const activeTabColor = 'rgb(255, 255, 255)';
-
-const tabListXpath = '//*[@role="tablist"]';
-
-/* this div is added at the end of the feed to trigger
-   pagination if there's too few posts on the screen */
-const EXTRA_HEIGHT_DIV = createExtaHeightDiv();
-
-window.addEventListener('resize', (e) => {
-  EXTRA_HEIGHT_DIV.style.height = window.innerHeight + 'px';
-});
-
-function createExtaHeightDiv() {
-  const div = document.createElement('div');
-  div.style.width = '100px';
-  div.style.height = window.innerHeight + 'px';
-  div.classList.add('wzl-extra-height');
-  div.style.background = 'transparent';
-  return div;
-}
-
-const getElement = (xpath: string) => {
-  return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null)
-    .singleNodeValue;
-};
-
-const getOrderedElements = (xpath: string, includeHidden: boolean = false) => {
-  const iterator = document.evaluate(
-    xpath,
-    document,
-    null,
-    XPathResult.ORDERED_NODE_ITERATOR_TYPE,
-    null,
-  );
-  const result = [];
-  try {
-    let thisNode = iterator.iterateNext() as HTMLElement;
-
-    while (thisNode) {
-      if (includeHidden || thisNode.checkVisibility()) {
-        result.push(thisNode);
-      }
-      thisNode = iterator.iterateNext() as HTMLElement;
-    }
-  } catch (e) {
-    console.error(LOG_PREFIX, `Error: Document tree modified during iteration ${e}`);
-  }
-  return result;
-};
-
-function getReposts(node: HTMLElement) {
-  const posts = node.querySelectorAll('div[data-testid*="feedItem"]');
-  const reposts: Node[] = [];
-  posts?.forEach((postNode) => {
-    // to avoid parsing by link text, relying on the page sctructure. Prone to breaking :(
-    const repostHeader = postNode.querySelector(
-      'div[data-testid*="feedItem"] a[href^="/profile/"] > svg + div > div > div',
-    );
-    if (repostHeader && !!repostHeader.textContent) {
-      reposts.push(postNode as HTMLElement);
-    }
-  });
-  return { posts, reposts };
-}
-
-type ObservedTab = {
+type ObservedFeed = {
   index: number;
   tabName: string;
   containerNode: Node;
   observer: MutationObserver | null;
 };
 
-let observedTab: ObservedTab | null = null;
+let activeFeed: ObservedFeed | null = null;
 
-function addTabObserver(index: number, tabName: string, containerNode: Node) {
+/** Feeds which will not be hiding reposts */
+const ignoredFeedNames: string[] = [];
+
+/** Monitors changes in the feed element, and removes reposts from it. */
+function addActiveFeedObserver(index: number, feedName: string, containerNode: Node) {
   let observer = null;
-  console.log({
-    tabName,
-    ignoredTabs,
-    included: ignoredTabs.includes(tabName?.toLocaleLowerCase() ?? ''),
+  const isIgnored = ignoredFeedNames.includes(feedName?.toLocaleLowerCase() ?? '');
+  console.log(LOG_PREFIX, 'active feed changed', {
+    feedName,
+    isIgnored,
+    ignoredFeedNames,
   });
-  if (!ignoredTabs.includes(tabName?.toLocaleLowerCase() ?? '')) {
+  if (!isIgnored) {
     observer = new MutationObserver((mutations) => {
       const totalReposts = [];
       const totalPosts = [];
       mutations.forEach((mutation) => {
         mutation.addedNodes?.forEach((addedNode) => {
-          const { posts, reposts } = getReposts(addedNode as HTMLElement);
+          const { posts, reposts } = findPostsAndReposts(addedNode as HTMLElement);
           if (posts.length > 0) {
             totalPosts.push(...posts);
           }
@@ -105,10 +46,14 @@ function addTabObserver(index: number, tabName: string, containerNode: Node) {
           }
         });
       });
-      if (totalPosts.length > 0 && totalPosts.length - totalReposts.length < 10) {
+      if (totalPosts.length > 0 && totalReposts.length > 0) {
         console.log(LOG_PREFIX, 'reposts hidden:', totalReposts?.length);
-        EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
-        containerNode.appendChild(EXTRA_HEIGHT_DIV);
+        if (totalPosts.length - totalReposts.length < 10) {
+          // if less then 10 posts were left untouched, reattach an extra height element to the end of the feed container
+          // this is used to avoid stuck pagination
+          EXTRA_HEIGHT_DIV.parentElement?.removeChild(EXTRA_HEIGHT_DIV);
+          containerNode.appendChild(EXTRA_HEIGHT_DIV);
+        }
       }
     });
     observer.observe(containerNode, {
@@ -116,104 +61,64 @@ function addTabObserver(index: number, tabName: string, containerNode: Node) {
       subtree: true,
     });
   }
-  observedTab = { index, tabName, containerNode, observer };
+  activeFeed = { index, tabName: feedName, containerNode, observer };
 }
 
-function removeTabObserver() {
-  if (observedTab) {
-    observedTab.observer?.disconnect();
-    observedTab = null;
+function removeActiveFeedObserver() {
+  if (activeFeed) {
+    activeFeed.observer?.disconnect();
+    activeFeed = null;
   }
 }
 
-function getVisibleTabs() {
-  const tabNodes = getOrderedElements(tabXpath);
-  return tabNodes.map((node) => {
-    const style = node.style;
-    return {
-      tabNode: node,
-      isActive: style?.getPropertyValue('color') === activeTabColor,
-    };
-  });
-}
+// ############## Tabs observer ####################
 
-function getActiveFeedContainer(index: number) {
-  const feedNodes = getOrderedElements(feedContainerXpath, true);
-  if (index <= feedNodes.length) {
-    return feedNodes[index];
-  }
-}
+let tabsObserver: MutationObserver | null = null;
 
-let tabsListObserver: MutationObserver | null = null;
-
-function observeTabLists() {
-  if (tabsListObserver) {
+/**
+ * Observes the document to detect when the active tab changes.
+ * Creates an observer for the currently selected feed.
+ */
+export function startObservingDocument() {
+  if (tabsObserver) {
     throw Error('Tabs observer already exists, cannot create a new one');
   }
-  tabsListObserver = new MutationObserver((mutations) => {
-    const element = getElement(tabListXpath);
-    if (element) {
-      const activeTabs = getVisibleTabs();
-      const activeIndex = activeTabs.findIndex((tab) => tab.isActive);
-      if (activeIndex !== -1 && activeTabs[activeIndex]) {
-        const activeFeedContainerNode = getActiveFeedContainer(activeIndex);
-        if (activeFeedContainerNode && observedTab?.containerNode !== activeFeedContainerNode) {
-          removeTabObserver();
-          addTabObserver(
+  tabsObserver = new MutationObserver((mutations) => {
+    // find the row of tabs. If it exists - tabs exist
+    const tabsRow = findTabsRow();
+    if (tabsRow) {
+      const visibleTabs = findVisibleTabs();
+      const activeIndex = visibleTabs.findIndex((tab) => tab.isActive);
+      if (activeIndex !== -1 && visibleTabs[activeIndex]) {
+        const activeFeedContainerNode = findFeedContainerByIndex(activeIndex);
+        if (activeFeedContainerNode && activeFeed?.containerNode !== activeFeedContainerNode) {
+          removeActiveFeedObserver();
+          addActiveFeedObserver(
             activeIndex,
-            activeTabs[activeIndex].tabNode.textContent,
+            visibleTabs[activeIndex].tabNode.textContent,
             activeFeedContainerNode,
           );
-          console.log(LOG_PREFIX, 'activeTab:', observedTab?.tabName);
+          console.log(LOG_PREFIX, 'activeTab:', activeFeed?.tabName);
         }
       }
     }
   });
 
-  tabsListObserver.observe(document.body, {
+  tabsObserver.observe(document.body, {
     childList: true,
     subtree: true,
   });
 }
 
-function stopObservingChanges() {
-  tabsListObserver?.disconnect();
-  tabsListObserver = null;
-  removeTabObserver();
+export function stopObservingDocument() {
+  tabsObserver?.disconnect();
+  tabsObserver = null;
+  removeActiveFeedObserver();
 }
 
-console.log(LOG_PREFIX, 'Script started!');
-
-chrome.storage.sync.onChanged.addListener((changes) => {
-  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-    switch (key) {
-      case KEY_ENABLED:
-        if (newValue === false) {
-          console.log(LOG_PREFIX, 'Turned off');
-          stopObservingChanges();
-        } else {
-          console.log(LOG_PREFIX, 'Turned on');
-          observeTabLists();
-        }
-        break;
-      case KEY_IGNORED_TABS:
-        console.log({ newValue, oldValue });
-        if (Array.isArray(newValue)) {
-          ignoredTabs.splice(0, ignoredTabs.length);
-          ignoredTabs.push(...newValue.map((v) => v.toLocaleLowerCase()));
-        }
-        break;
-    }
+export function setIgnoredFeedNames(newValue: string[]) {
+  if (ignoredFeedNames.length > 0) {
+    ignoredFeedNames.splice(0, ignoredFeedNames.length);
   }
-});
-
-(async () => {
-  let initialSettings = await getSettings();
-  console.log(LOG_PREFIX, 'settings:', initialSettings);
-  if (initialSettings.enabled) {
-    observeTabLists();
-  }
-  if (Array.isArray(initialSettings.ignoredTabs)) {
-    ignoredTabs.push(...initialSettings.ignoredTabs?.map((v) => v.toLocaleLowerCase()));
-  }
-})();
+  ignoredFeedNames.push(...newValue.map((v) => v.toLocaleLowerCase()));
+}
